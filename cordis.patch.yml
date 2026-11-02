@@ -1,0 +1,5 @@
+# DeepSeek Harness bundle layer. Adds the host route (/dsh-fireworks) and the
+# matching browser module without modifying Harness source.
+- insert:
+    - id: dsh-fireworks
+      name: dsh-fireworks

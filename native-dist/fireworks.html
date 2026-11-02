@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>dsh fireworks</title>
+<style>
+  html, body { margin: 0; padding: 0; background: transparent; overflow: hidden; }
+  canvas { display: block; position: fixed; inset: 0; }
+  #hint {
+    position: fixed; left: 14px; bottom: 12px;
+    font: 11px/1.6 -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    color: rgba(255, 255, 255, .38); letter-spacing: .05em;
+    opacity: 0; transition: opacity .8s ease; pointer-events: none;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, .6);
+  }
+  #hint.show { opacity: 1; }
+</style>
+</head>
+<body>
+  <canvas id="sky" aria-hidden="true"></canvas>
+  <div id="hint">采集器未运行 · 运行 feeder/start_feeder.ps1</div>
+  <script src="./fireworks.js"></script>
+</body>
+</html>

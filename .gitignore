@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+feeder.pid
+feeder.log
+feeder.err
+stop.flag
+state.json
+
