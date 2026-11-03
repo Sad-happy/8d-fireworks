@@ -267,7 +267,16 @@ body[data-ds-dark-theme] :is([data-shortcut-modal="settings"], [role="dialog"], 
       frame.setAttribute('aria-hidden', 'true');
       frame.setAttribute('tabindex', '-1');
       frame.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;border:0;z-index:0;pointer-events:none;background:transparent;';
-      root.insertBefore(frame, root.firstChild);
+      // Both background layers use z-index:0 and paint in DOM order. Insert
+      // after the open-sea-skin iframe (same trick: first-child) so fireworks
+      // stacks above the ocean but still below the app UI. Without this,
+      // whichever plugin mounts last covers the other.
+      const seaFrame = document.getElementById('__open-sea-skin__');
+      if (seaFrame && seaFrame.parentNode === root) {
+        seaFrame.after(frame);
+      } else {
+        root.insertBefore(frame, root.firstChild);
+      }
       const style = document.createElement('style');
       style.id = IDS.glass;
       style.textContent = glassCss(state.glass);

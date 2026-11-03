@@ -20,6 +20,11 @@
 <body>
   <canvas id="sky" aria-hidden="true"></canvas>
   <div id="hint">采集器未运行 · 运行 feeder/start_feeder.ps1</div>
-  <script src="./fireworks.js"></script>
+  <!-- liveness marker: visible whenever THIS html is loaded at all.
+       The renderer's FX badge pill (86x18, bottom-left) covers it once the
+       current fireworks.js runs; a bare red dot means stale cached JS. -->
+  <div id="mk" style="position:fixed;left:10px;bottom:12px;width:10px;height:10px;
+       border-radius:50%;background:#ff4444;opacity:.9;pointer-events:none"></div>
+  <script src="./fireworks.js?v=6"></script>
 </body>
 </html>
