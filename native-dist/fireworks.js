@@ -126,6 +126,9 @@
   var online = false;      // feeder fresh?
   var lastLaunch = 0;      // performance.now() ms, for quiet-sky fallback
   var pollBusy = false;
+  var eventsSeen = 0;      // consumed-event counter (status badge)
+  // ?demo=1 — ignore the feeder and fire a bright rocket every ~2 s
+  var demo = params().get('demo') === '1';
 
   function poll() {
     if (pollBusy) return;
@@ -146,6 +149,7 @@
           var e = events[k];
           if (e.id > lastEventId) {
             lastEventId = e.id;
+            eventsSeen++;
             if (online) {
               if (e.type === 'kick') launch(e.s);
               else if (e.type === 'crackle') crackle(e.s);
@@ -167,6 +171,7 @@
       lastLaunch = nowMs;
     }
     if (!online) lastLaunch = nowMs;
+    if (demo && nowMs - lastLaunch > 2000) { launch(0.85); lastLaunch = nowMs; }
 
     var i, r, q;
     for (i = rockets.length - 1; i >= 0; i--) {
@@ -211,8 +216,13 @@
 
     // crescent moon
     var mx = W * 0.06, my = H * 0.16, mr = Math.min(26, 16 * S);
-    ctx.fillStyle = col(0.13, 0.18, 0.86);
+    ctx.fillStyle = col(0.13, 0.30, 0.80);
     circle(mx, my, mr);
+    ctx.strokeStyle = 'rgba(60,50,30,0.35)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(mx, my, mr, 0, Math.PI * 2);
+    ctx.stroke();
     ctx.clearRect(mx - mr * 2.2, my - mr * 2.2, mr * 2.2, mr * 2.2); // bite
     // re-draw stars near the bite lost to clearRect (cheap: skip — moon sits high-left, stars sparse)
 
@@ -227,19 +237,21 @@
       dot(r.x, r.y, 1.8);
     }
 
-    // sparks: ghost trail + head
+    // sparks: ghost trail + head.
+    // Colors stay SATURATED and mid-light: near-white sparks vanish on a
+    // light-themed app background (white glass), vivid hues read on both.
     for (k = 0; k < parts.length; k++) {
       q = parts[k];
       var fade = 1.0 - q.age / q.life;
-      var flick = 0.72 + 0.28 * rnd();
-      var light = (0.80 * fade + 0.22) * flick;
-      var sat2 = 0.25 + 0.65 * (1.0 - fade);
+      var flick = 0.80 + 0.20 * rnd();
+      var light = (0.34 * fade + 0.38) * flick;       // 0.38..0.72, never white
+      var sat2 = 0.75 + 0.25 * (1.0 - fade);
       for (j = 1; j < q.hist.length; j++) {
-        ctx.fillStyle = col(q.hue, sat2, light * (0.55 - 0.18 * j));
+        ctx.fillStyle = col(q.hue, sat2, light * (0.72 - 0.10 * j));
         dot(q.hist[j][0], q.hist[j][1], Math.max(0.6, 1.6 - 0.4 * j));
       }
       ctx.fillStyle = col(q.hue, sat2, light);
-      dot(q.x, q.y, 1.6);
+      dot(q.x, q.y, 1.7);
     }
 
     // burst rings
@@ -253,6 +265,25 @@
     }
 
     hint.classList.toggle('show', !online);
+
+    // status badge: consumed-event counter (bottom-left). Always drawn so a
+    // quick look tells renderer(loaded?) / events(flowing?) / show(visible?).
+    ctx.fillStyle = 'rgba(8,10,16,0.72)';
+    ctx.beginPath();
+    roundRect(ctx, 8, H - 26, 86, 18, 9);
+    ctx.fill();
+    ctx.fillStyle = '#ffd76a';
+    ctx.font = '11px monospace';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('FX ' + eventsSeen + (online ? '' : ' offline'), 16, H - 17);
+  }
+  function roundRect(c, x, y, w, h, r) {
+    c.moveTo(x + r, y);
+    c.arcTo(x + w, y, x + w, y + h, r);
+    c.arcTo(x + w, y + h, x, y + h, r);
+    c.arcTo(x, y + h, x, y, r);
+    c.arcTo(x, y, x + w, y, r);
+    c.closePath();
   }
 
   function dot(x, y, r) {
