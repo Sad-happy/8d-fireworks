@@ -1,15 +1,30 @@
-# dsh-fireworks
+# 8d-fireworks
 
-Audio-driven fireworks background skin for DeepSeek Harness — bass drum hits
-launch rockets, strong kicks burst into hearts, hi-hats crackle white, and a
-quiet night sky with stars and a crescent moon fills the rest.
+8D audio-reactive fireworks for DeepSeek Harness — the sky lives above the chat
+window and answers what your headphones are playing: bass hits launch rockets,
+kicks burst into peonies, hearts, rings and palms, hi-hats crackle, and a quiet
+star field with the real moon phase fills the gaps.
+
+Show highlights:
+
+- 11 shell types (peony, chrysanthemum, willow, ring, heart, crossette, palm,
+  glitter, spiral, double, plus pistil/strobe cores) and multi-break grand shells.
+- The moon follows the real synodic month (`0` = new, `.5` = full): terminator,
+  earthshine and craters track today's date. `?moon=0.25` freezes a phase for
+  testing.
+- 170 stars with a milky-way band, cross flares and twinkle, plus occasional
+  meteors.
+
+> Renamed from `dsh-fireworks` to `8d-fireworks` (v0.2) so it no longer shares a
+> name/description with other marketplace plugins.
+
 
 ```
 ┌────────────────────────────────────────────────────────────┐
 │  DSH app (glass shell)                                     │
 │  ┌──────────────────────────────────────────────────────┐  │
 │  │ fireworks iframe (z-index 0, canvas 2D, 60 fps)      │  │
-│  │   ↑ polls /dsh-fireworks/state.json (30 Hz)          │  │
+│  │   ↑ polls /8d-fireworks/state.json (30 Hz)          │  │
 │  └──────────────────────────────────────────────────────┘  │
 └────────────────────────────────────────────────────────────┘
         ↑ HTTP (same origin)            ↑ reads
@@ -24,7 +39,7 @@ quiet night sky with stars and a crescent moon fills the rest.
 ```powershell
 # from the profile that runs the desktop app
 corepack pnpm@11.28.5 --dir <profile-dir> add link:<path-to-this-repo>
-# then add "dsh-fireworks" to dsh.profile.bundles in the profile package.json
+# then add "8d-fireworks" to dsh.profile.bundles in the profile package.json
 ```
 
 ## Run
@@ -43,7 +58,7 @@ ocean-skin button, with glass opacity / firework density / on-off settings.
 |---|---|
 | `plugin/index.js` | host plugin: serves the renderer and bridges `state.json` |
 | `plugin/client.js` | client injection: iframe + glass + button/panel |
-| `native-dist/fireworks.html/js` | the canvas show (star field, rockets, hearts) |
+| `native-dist/fireworks.html/js` | the canvas show (star field, real moon phase, shells, meteors) |
 | `feeder/feeder.py` | loopback analyser publishing onset events at 30 fps |
 | `feeder/start_feeder.ps1` / `stop_feeder.ps1` | feeder lifecycle |
 

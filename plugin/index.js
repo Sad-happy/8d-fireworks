@@ -1,6 +1,6 @@
 /**
- * dsh-fireworks host plugin.
- * Serves the fireworks renderer under /dsh-fireworks and publishes the audio
+ * 8d-fireworks host plugin.
+ * Serves the fireworks renderer under /8d-fireworks and publishes the audio
  * feeder's state file as JSON — the browser page cannot read local files, so
  * the host bridges ~/.dsh/fireworks/state.json into the same-origin route.
  */
@@ -9,10 +9,10 @@ import { extname, resolve, sep, join } from 'node:path'
 import { homedir } from 'node:os'
 import { fileURLToPath } from 'node:url'
 
-export const name = 'dsh-fireworks'
+export const name = '8d-fireworks'
 export const inject = ['webServer']
 
-const ROUTE = '/dsh-fireworks'
+const ROUTE = '/8d-fireworks'
 const ASSET_ROOT = resolve(fileURLToPath(new URL('../native-dist/', import.meta.url)))
 const MIME = Object.freeze({
   '.css': 'text/css; charset=utf-8',
@@ -117,5 +117,5 @@ export function apply(ctx) {
     kind: 'prefix',
     path: ROUTE,
     handler: serveAsset,
-  }), 'dsh-fireworks: renderer + feeder state route')
+  }), '8d-fireworks: renderer + feeder state route')
 }

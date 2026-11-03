@@ -1,14 +1,16 @@
 {
-  "name": "dsh-fireworks",
-  "version": "0.1.0",
+  "name": "8d-fireworks",
+  "version": "0.2.0",
   "type": "module",
   "private": true,
-  "description": "Audio-driven fireworks background skin for DeepSeek Harness",
+  "description": "8D audio-reactive fireworks with real lunar phases for DeepSeek Harness",
   "keywords": [
     "deepseek-harness",
     "dsh-plugin",
     "fireworks",
-    "skin"
+    "skin",
+    "moon-phase",
+    "8d-audio"
   ],
   "main": "plugin/index.js",
   "exports": {

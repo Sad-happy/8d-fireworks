@@ -1,18 +1,18 @@
-// dsh-fireworks client controller — injects the full-screen fireworks iframe,
+// 8d-fireworks client controller — injects the full-screen fireworks iframe,
 // a translucent shell (glass) and the settings button/panel into the DSH page.
 // Panel styling and glass approach adapted from open-sea-skin (MIT), with the
 // light-theme dialog fix baked in: our dialog-protection rule excludes our own
 // panel, and the panel background carries !important.
-window.__ModuleLoader__.load({ id: "dsh-fireworks", factory: (require) => {
+window.__ModuleLoader__.load({ id: "8d-fireworks", factory: (require) => {
   var module = { exports: {} };
   var exports = module.exports;
 
   const IDS = Object.freeze({
-    frame: '__dsh-fireworks__',
-    glass: '__dsh-fireworks-glass__',
-    uiStyle: '__dsh-fireworks-glass__-ui',
-    button: '__dsh-fireworks-btn__',
-    panel: '__dsh-fireworks-panel__',
+    frame: '__8d-fireworks__',
+    glass: '__8d-fireworks-glass__',
+    uiStyle: '__8d-fireworks-glass__-ui',
+    button: '__8d-fireworks-btn__',
+    panel: '__8d-fireworks-panel__',
   });
 
   const KEYS = Object.freeze({
@@ -32,7 +32,7 @@ window.__ModuleLoader__.load({ id: "dsh-fireworks", factory: (require) => {
       enable: '启用烟花背景',
       reset: '恢复默认',
       resetNote: '恢复全部默认设置（玻璃 55 / 密度 100 / 启用）',
-      note: '调节即时生效并自动保存；烟花对耳机里播放的声音起舞。',
+      note: '调节即时生效并自动保存；烟花对耳机里播放的声音起舞，月亮随日期真实盈亏。',
     },
     en: {
       button: 'Fireworks settings',
@@ -42,7 +42,7 @@ window.__ModuleLoader__.load({ id: "dsh-fireworks", factory: (require) => {
       enable: 'Enable fireworks background',
       reset: 'Reset to defaults',
       resetNote: 'Restore all defaults (glass 55 / density 100 / enabled)',
-      note: 'Changes apply immediately and save automatically. Fireworks dance to the sound playing on your headphones.',
+      note: 'Changes apply immediately and save automatically. Fireworks dance to the sound on your headphones, and the moon tracks the real lunar phase.',
     },
   });
 
@@ -83,7 +83,7 @@ window.__ModuleLoader__.load({ id: "dsh-fireworks", factory: (require) => {
       ? { base: '10, 14, 22', l1: '12, 16, 25', l2: '16, 20, 30', l3: '20, 25, 35', ov: '12, 16, 25' }
       : { base: '255, 255, 255', l1: '250, 250, 252', l2: '245, 246, 250', l3: '240, 241, 246', ov: '250, 251, 253' };
     return `
-/* dsh-fireworks: translucent shell (${dark ? 'dark' : 'light'} theme); fireworks shine through. */
+/* 8d-fireworks: translucent shell (${dark ? 'dark' : 'light'} theme); fireworks shine through. */
 body {
   background: transparent !important;
   --dsw-alias-bg-base: rgba(${c.base}, ${a}) !important;
@@ -192,7 +192,7 @@ body[data-ds-dark-theme] :is([data-shortcut-modal="settings"], [role="dialog"], 
     const save = (patch) => {
       state = normalize({ ...state, ...patch });
       Promise.resolve(options.storage.set(patch)).catch((error) => {
-        console.warn('[dsh-fireworks] Failed to save settings.', error);
+        console.warn('[8d-fireworks] Failed to save settings.', error);
       });
     };
 
@@ -237,7 +237,7 @@ body[data-ds-dark-theme] :is([data-shortcut-modal="settings"], [role="dialog"], 
       const sea = !!document.getElementById('__open-sea-skin__');
       const glass = seaOwnsGlass() ? '海洋接管' : (document.getElementById(IDS.glass) ? '自有' : '无');
       const text = `背景层${frameOk ? '已挂载' : '未挂载'} · 海洋${sea ? '在场' : '不在场'} · 玻璃:${glass}`;
-      if (button) button.title = `dsh-fireworks — ${text}`;
+      if (button) button.title = `8d-fireworks — ${text}`;
       if (note instanceof HTMLElement) {
         if (!note.dataset.base) note.dataset.base = note.innerHTML;
         note.innerHTML = `${note.dataset.base}<br><b>状态：${text}</b>`;
@@ -441,12 +441,12 @@ body[data-ds-dark-theme] :is([data-shortcut-modal="settings"], [role="dialog"], 
           density: readSetting('density', DEFAULTS.density),
         });
       } catch (error) {
-        console.warn('[dsh-fireworks] Failed to load settings; using defaults.', error);
+        console.warn('[8d-fireworks] Failed to load settings; using defaults.', error);
       }
       try {
         applyEnabled();
       } catch (error) {
-        console.warn('[dsh-fireworks] applyEnabled failed.', error);
+        console.warn('[8d-fireworks] applyEnabled failed.', error);
       }
       reportStatus();
     };
@@ -459,11 +459,11 @@ body[data-ds-dark-theme] :is([data-shortcut-modal="settings"], [role="dialog"], 
     return Object.freeze({ start, stop, getState: () => ({ ...state }) });
   }
 
-  exports.name = 'dsh-fireworks-client';
+  exports.name = '8d-fireworks-client';
   exports.inject = [];
   exports.apply = function apply(ctx) {
     const controller = createController({
-      assetUrl: (path) => '/dsh-fireworks/' + path,
+      assetUrl: (path) => '/8d-fireworks/' + path,
       storage: {
         get: async () => ({
           enabled: readSetting('enabled', DEFAULTS.enabled),
@@ -480,7 +480,7 @@ body[data-ds-dark-theme] :is([data-shortcut-modal="settings"], [role="dialog"], 
       },
     });
     void controller.start();
-    ctx.effect(() => () => controller.stop(), 'dsh-fireworks: browser surface');
+    ctx.effect(() => () => controller.stop(), '8d-fireworks: browser surface');
   };
 
   return module.exports;
