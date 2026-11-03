@@ -72,4 +72,10 @@ ocean-skin button. The panel has glass opacity, firework density, moon phase
 - State file: `~/.dsh/fireworks/state.json` (override `DSH_HOME`).
 - The feeder captures the **final** audio (headphones loopback), so fireworks
   react to the post-8D sound when the 8D engine is running.
-- Panel styling adapted from open-sea-skin (MIT).
+
+## Acknowledgments
+
+- [open-sea-skin](https://github.com/d-dev0101/open-sea-skin) by **dd
+  (@d-dev0101)** — the settings panel, glass shell and background-frame
+  injection patterns are adapted from its client implementation
+  (MIT, © Open Sea Skin contributors). See the notice at the end of LICENSE.
