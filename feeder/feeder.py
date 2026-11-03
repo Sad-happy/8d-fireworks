@@ -8,7 +8,7 @@ final post-8D sound) and writes a small JSON state file at ~30 fps:
   ~/.dsh/fireworks/state.json
   {
     "v": 1, "seq": 123, "ts": 1730560000.12,
-    "meta": {"capture": "耳机 (Realtek(R) Audio)", "sr": 48000},
+    "meta": {"capture": "耳机 (Realtek(R) Audio)", "sr": 48000, "boot": 1730560000.0},
     "bass": -41.2, "treb": -55.8, "level": 0.13,
     "events": [
       {"id": 87, "t": 1730560000.05, "type": "kick", "s": 0.72},
@@ -17,7 +17,9 @@ final post-8D sound) and writes a small JSON state file at ~30 fps:
   }
 
 Events carry monotonic ids so the browser renderer can consume them exactly
-once (no misses, no duplicates). Detection is the same recipe as the tkinter
+once (no misses, no duplicates). meta.boot (process start epoch) lets the
+renderer detect a feeder restart and reset its lastEventId — otherwise a
+restarted feeder's low ids would be silently dropped by a long-lived page. Detection is the same recipe as the tkinter
 fireworks: baseline EMA (a=0.02), bass onset -> "kick" (rocket), treble spike
 -> "crackle" (white sparkle), each with its own refractory window.
 
@@ -78,6 +80,7 @@ frames = deque(maxlen=80)
 lock = threading.Lock()
 aud = {}                      # {"p","stream","SR","CH","name"} — reader-thread only
 demo = a.demo or a.capture_substr == "@demo"
+BOOT_TS = round(time.time(), 3)   # process start epoch, for renderer restart detection
 DEV_NAME = "demo" if demo else "waiting for device"
 SR, CH = 48000, 2
 
@@ -126,7 +129,8 @@ def write_state(bass_db, treb_db, level, now):
     payload = {
         "v": 1, "seq": seq, "ts": round(now, 3),
         "meta": {"capture": aud.get("name", DEV_NAME),
-                 "sr": aud.get("SR", SR), "demo": demo},
+                 "sr": aud.get("SR", SR), "demo": demo,
+                 "boot": BOOT_TS},
         "bass": round(bass_db, 1), "treb": round(treb_db, 1),
         "level": round(level, 4),
         "events": events,

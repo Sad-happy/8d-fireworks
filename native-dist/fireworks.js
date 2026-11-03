@@ -121,6 +121,7 @@
 
   // ---------- feeder polling ----------
   var lastEventId = 0;
+  var lastBoot = 0;        // feeder process start epoch (meta.boot)
   var lastTs = 0;          // feeder clock
   var online = false;      // feeder fresh?
   var lastLaunch = 0;      // performance.now() ms, for quiet-sky fallback
@@ -136,6 +137,10 @@
         if (!data) { online = false; return; }
         lastTs = data.ts || 0;
         online = !data.stale;
+        // feeder restarted?  its event ids start over, so a long-lived page
+        // would drop every new event as "already seen" — detect and reset.
+        var boot = (data.meta && data.meta.boot) || 0;
+        if (boot && boot !== lastBoot) { lastBoot = boot; lastEventId = 0; }
         var events = data.events || [];
         for (var k = 0; k < events.length; k++) {
           var e = events[k];
