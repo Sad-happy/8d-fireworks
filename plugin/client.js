@@ -33,6 +33,7 @@ window.__ModuleLoader__.load({ id: "8d-fireworks", factory: (require) => {
       moon: '月相',
       moonAuto: '跟随真实日期',
       moonAutoShort: '自动',
+      show: '烟花',
       enable: '启用烟花背景',
       reset: '恢复默认',
       resetNote: '恢复全部默认设置（玻璃 55 / 密度 100 / 月相自动 / 启用）',
@@ -46,6 +47,7 @@ window.__ModuleLoader__.load({ id: "8d-fireworks", factory: (require) => {
       moon: 'Moon phase',
       moonAuto: 'Follow the real date',
       moonAutoShort: 'auto',
+      show: 'Fireworks',
       enable: 'Enable fireworks background',
       reset: 'Reset to defaults',
       resetNote: 'Restore all defaults (glass 55 / density 100 / moon auto / enabled)',
@@ -194,6 +196,45 @@ body[data-ds-dark-theme] :is([data-shortcut-modal="settings"], [role="dialog"], 
 
   function createController(options) {
     let state = { ...DEFAULTS };
+    // Fireworks on/off is NOT a localStorage setting: ~/.dsh/fireworks/ctl.json
+    // is the single source of truth, shared with the desktop window and the
+    // voice butler (语音"停烟花"). The panel mirrors it and POSTs changes.
+    let fwShow = { on: true };
+    let ctlTimer = 0;
+    const syncShow = () => {
+      const box = document.getElementById(`${IDS.panel}-show`);
+      if (box instanceof HTMLInputElement) box.checked = fwShow.on;
+      postToFrame();
+    };
+    // graceful degradation: when the ctl endpoints are missing (host plugin
+    // code predates them, i.e. the app has not been restarted yet), persist
+    // the toggle in localStorage so it at least survives page reloads.
+    const applyLocal = () => {
+      try {
+        const v = localStorage.getItem('fwShow');
+        if (v === '0' && fwShow.on) { fwShow.on = false; syncShow(); }
+        else if (v === '1' && !fwShow.on) { fwShow.on = true; syncShow(); }
+      } catch { /* storage unavailable */ }
+    };
+    const fetchCtl = async () => {
+      try {
+        const res = await fetch(options.assetUrl('ctl.json'), { cache: 'no-store' });
+        if (!res.ok) { applyLocal(); return; }
+        const data = await res.json();
+        if (typeof data.fw === 'boolean' && data.fw !== fwShow.on) {
+          fwShow.on = data.fw;
+          syncShow();
+        }
+      } catch { applyLocal(); }
+    };
+    const pushCtl = (on) => {
+      try { localStorage.setItem('fwShow', on ? '1' : '0'); } catch { /* ignore */ }
+      fetch(options.assetUrl('ctl'), {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ fw: on }),
+      }).catch(() => { /* endpoint absent: localStorage keeps the state */ });
+    };
     const copy = selectCopy();
     let ownsSurface = false;
     let panelOpen = false;
@@ -238,7 +279,7 @@ body[data-ds-dark-theme] :is([data-shortcut-modal="settings"], [role="dialog"], 
       if (!(frame instanceof HTMLIFrameElement) || !frame.contentWindow) return;
       let targetOrigin = '*';
       try { targetOrigin = new URL(frame.src).origin; } catch { /* keep '*' */ }
-      frame.contentWindow.postMessage({ type: 'fw-set', density: state.density, moon: state.moon }, targetOrigin);
+      frame.contentWindow.postMessage({ type: 'fw-set', density: state.density, moon: state.moon, show: fwShow.on }, targetOrigin);
     };
 
     // Diagnostic line rendered INSIDE our own panel (no iframe dependency):
@@ -362,6 +403,7 @@ body[data-ds-dark-theme] :is([data-shortcut-modal="settings"], [role="dialog"], 
         <div class="fw-row"><div class="fw-head"><label for="${IDS.panel}-glass-range">${copy.glass}</label><output class="fw-value" id="${IDS.panel}-glass" for="${IDS.panel}-glass-range"></output></div><input type="range" id="${IDS.panel}-glass-range" min="40" max="90" step="1" /></div>
         <div class="fw-row"><div class="fw-head"><label for="${IDS.panel}-density-range">${copy.density}</label><output class="fw-value" id="${IDS.panel}-density" for="${IDS.panel}-density-range"></output></div><input type="range" id="${IDS.panel}-density-range" min="50" max="150" step="5" /></div>
         <div class="fw-row"><div class="fw-head"><label for="${IDS.panel}-moon-range">${copy.moon}</label><output class="fw-value" id="${IDS.panel}-moon" for="${IDS.panel}-moon-range"></output></div><input type="range" id="${IDS.panel}-moon-range" min="0" max="100" step="1" /><div class="fw-switch fw-moon-auto"><label for="${IDS.panel}-moon-auto">${copy.moonAuto}</label><input type="checkbox" id="${IDS.panel}-moon-auto" /></div></div>
+        <div class="fw-row fw-switch"><label for="${IDS.panel}-show">${copy.show}</label><input type="checkbox" id="${IDS.panel}-show" /></div>
         <div class="fw-row fw-switch"><label for="${IDS.panel}-enabled">${copy.enable}</label><input type="checkbox" id="${IDS.panel}-enabled" /></div>
         <button type="button" class="fw-reset">${copy.reset}</button>
         <p class="fw-note">${copy.resetNote}<br>${copy.note}</p>`;
@@ -376,6 +418,7 @@ body[data-ds-dark-theme] :is([data-shortcut-modal="settings"], [role="dialog"], 
       const densityOut = panel.querySelector(`#${IDS.panel}-density`);
       const moonOut = panel.querySelector(`#${IDS.panel}-moon`);
       const enableBox = panel.querySelector(`#${IDS.panel}-enabled`);
+      const showBox = panel.querySelector(`#${IDS.panel}-show`);
       const moonAutoBox = panel.querySelector(`#${IDS.panel}-moon-auto`);
 
       const refresh = () => {
@@ -389,6 +432,7 @@ body[data-ds-dark-theme] :is([data-shortcut-modal="settings"], [role="dialog"], 
         moonOut.textContent = moonAuto ? copy.moonAutoShort : `${Math.round(state.moon * 100)}%`;
         moonAutoBox.checked = moonAuto;
         enableBox.checked = state.enabled;
+        showBox.checked = fwShow.on;
       };
       refresh();
 
@@ -400,6 +444,11 @@ body[data-ds-dark-theme] :is([data-shortcut-modal="settings"], [role="dialog"], 
         refresh(); postToFrame();
       });
       enableBox.addEventListener('change', () => { save({ enabled: enableBox.checked }); applyEnabled(); });
+      showBox.addEventListener('change', () => {
+        fwShow.on = showBox.checked;
+        postToFrame();
+        pushCtl(fwShow.on);
+      });
       panel.querySelector('.fw-close').addEventListener('click', () => setPanelOpen(false));
       panel.querySelector('.fw-reset').addEventListener('click', () => {
         save({ ...DEFAULTS }); refresh(); updateGlass(); postToFrame(); applyEnabled();
@@ -479,6 +528,10 @@ body[data-ds-dark-theme] :is([data-shortcut-modal="settings"], [role="dialog"], 
         console.warn('[8d-fireworks] applyEnabled failed.', error);
       }
       reportStatus();
+      // mirror the shared ctl.json (voice butler / desktop window write it too)
+      void fetchCtl();
+      ctlTimer = setInterval(fetchCtl, 2000);
+      controllerCleanups.push(() => clearInterval(ctlTimer));
     };
 
     const stop = () => {

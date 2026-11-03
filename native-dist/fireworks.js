@@ -67,6 +67,7 @@
     } else if (Number.isFinite(Number(m.moon))) {
       moonOverride = ((Number(m.moon) % 1) + 1) % 1;
     }
+    if (typeof m.show === 'boolean') show = m.show;
   });
 
   function resize() {
@@ -175,6 +176,7 @@
   var rockets = [];
   var flashes = [];     // burst ring + core flash
   var delayed = [];     // secondary bursts (multi-break shells)
+  var show = true;      // false = starry-sky-only mode (panel / voice ctl)
   var shooters = [];    // shooting stars
   var MAX_PARTS = 1400;
   var tick = 0;
@@ -483,7 +485,7 @@
           if (e.id > lastEventId) {
             lastEventId = e.id;
             eventsSeen++;
-            if (online) {
+            if (online && show) {
               if (e.type === 'kick') launch(e.s);
               else if (e.type === 'crackle') crackle(e.s);
             }
@@ -509,7 +511,7 @@
     }
 
     // quiet-sky fallback: keep the show alive when music pauses
-    if (online && nowMs - lastLaunch > 4500 && rockets.length < 6 * density / 100) {
+    if (show && online && nowMs - lastLaunch > 4500 && rockets.length < 6 * density / 100) {
       launch(0.30);
       lastLaunch = nowMs;
     }
@@ -807,7 +809,7 @@
     ctx.fillStyle = '#ffd76a';
     ctx.font = '11px monospace';
     ctx.textBaseline = 'middle';
-    ctx.fillText('FX ' + eventsSeen + (online ? '' : ' offline'), bx + 8, by + 9);
+    ctx.fillText('FX ' + eventsSeen + (online ? '' : ' offline') + (show ? '' : ' - bg'), bx + 8, by + 9);
   }
 
   function draw() {

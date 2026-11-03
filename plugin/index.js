@@ -4,8 +4,8 @@
  * feeder's state file as JSON — the browser page cannot read local files, so
  * the host bridges ~/.dsh/fireworks/state.json into the same-origin route.
  */
-import { readFile, stat } from 'node:fs/promises'
-import { extname, resolve, sep, join } from 'node:path'
+import { readFile, stat, writeFile, rename, mkdir } from 'node:fs/promises'
+import { extname, resolve, sep, join, dirname } from 'node:path'
 import { homedir } from 'node:os'
 import { fileURLToPath } from 'node:url'
 
@@ -24,6 +24,11 @@ const MIME = Object.freeze({
 function statePath() {
   const home = process.env.DSH_HOME || join(homedir(), '.dsh')
   return join(home, 'fireworks', 'state.json')
+}
+
+function ctlPath() {
+  const home = process.env.DSH_HOME || join(homedir(), '.dsh')
+  return join(home, 'fireworks', 'ctl.json')
 }
 
 function finish(res, status, headers = {}) {
@@ -65,17 +70,74 @@ async function serveState(req, res) {
   res.end(req.method === 'HEAD' ? undefined : body)
 }
 
-async function serveAsset(req, res) {
-  if (req.method !== 'GET' && req.method !== 'HEAD') {
-    finish(res, 405, { allow: 'GET, HEAD' })
-    return
+// --- fireworks on/off (ctl.json): shared with the desktop window and the
+// voice butler; the panel checkbox POSTs here, everyone polls the file. ---
+async function serveCtlGet(req, res) {
+  let body
+  try {
+    body = await readFile(ctlPath())
+  } catch {
+    body = Buffer.from(JSON.stringify({ fw: true }), 'utf-8')
   }
+  res.writeHead(200, {
+    'cache-control': 'no-store',
+    'content-length': String(body.byteLength),
+    'content-type': MIME['.json'],
+    'x-content-type-options': 'nosniff',
+  })
+  res.end(req.method === 'HEAD' ? undefined : body)
+}
 
+async function serveCtlPost(req, res) {
+  const chunks = []
+  let size = 0
+  for await (const chunk of req) {
+    size += chunk.length
+    if (size > 4096) { finish(res, 413); return }
+    chunks.push(chunk)
+  }
+  let fw
+  try {
+    fw = JSON.parse(Buffer.concat(chunks).toString('utf-8')).fw
+  } catch { fw = undefined }
+  if (typeof fw !== 'boolean') { finish(res, 400); return }
+  try {
+    const file = ctlPath()
+    await mkdir(dirname(file), { recursive: true })
+    const tmp = `${file}.${process.pid}.tmp`
+    await writeFile(tmp, JSON.stringify({ fw }), 'utf-8')
+    await rename(tmp, file)
+  } catch { finish(res, 500); return }
+  const body = Buffer.from(JSON.stringify({ ok: true, fw }), 'utf-8')
+  res.writeHead(200, {
+    'cache-control': 'no-store',
+    'content-length': String(body.byteLength),
+    'content-type': MIME['.json'],
+    'x-content-type-options': 'nosniff',
+  })
+  res.end(body)
+}
+
+async function serveAsset(req, res) {
   let pathname
   try {
     pathname = decodeURIComponent(new URL(req.url ?? ROUTE, 'http://dsh.local').pathname)
   } catch {
     finish(res, 400)
+    return
+  }
+
+  if (pathname === `${ROUTE}/ctl.json`) {
+    await serveCtlGet(req, res)
+    return
+  }
+  if (pathname === `${ROUTE}/ctl` && req.method === 'POST') {
+    await serveCtlPost(req, res)
+    return
+  }
+
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
+    finish(res, 405, { allow: 'GET, HEAD' })
     return
   }
 
