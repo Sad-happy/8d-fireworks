@@ -12,6 +12,12 @@
 (function () {
   'use strict';
 
+  // probe: gold dot = this external script is executing at all
+  try {
+    var _mk = document.getElementById('mk');
+    if (_mk) { _mk.style.background = '#ffd76a'; _mk.style.boxShadow = '0 0 6px #ffd76a'; }
+  } catch (e) { /* standalone debugging */ }
+
   // ---------- setup ----------
   var cv = document.getElementById('sky');
   var hint = document.getElementById('hint');

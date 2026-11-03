@@ -25,6 +25,22 @@
        current fireworks.js runs; a bare red dot means stale cached JS. -->
   <div id="mk" style="position:fixed;left:10px;bottom:12px;width:10px;height:10px;
        border-radius:50%;background:#ff4444;opacity:.9;pointer-events:none"></div>
-  <script src="./fireworks.js?v=7"></script>
+  <script>
+    /* Liveness probe matrix:
+       RED    = HTML loaded, no script executed at all
+       GREEN  = inline script ran (scripts allowed), external JS not started
+       GOLD   = external fireworks.js executing (its first line flips the dot)
+       BADGE  = renderer main loop running (gold dot gets covered by the pill)
+       Any renderer error prints "ERR: ..." into the hint line. */
+    window.onerror = function (msg) {
+      var h = document.getElementById('hint');
+      if (h) { h.textContent = 'ERR: ' + msg; h.classList.add('show'); }
+    };
+    (function () {
+      var mk = document.getElementById('mk');
+      if (mk) mk.style.background = '#22cc55';
+    })();
+  </script>
+  <script src="./fireworks.js?v=8"></script>
 </body>
 </html>
