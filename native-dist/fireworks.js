@@ -49,6 +49,7 @@
   if (d) { var v = Number(d); if (Number.isFinite(v)) density = Math.min(150, Math.max(50, v)); }
   // debug: ?moon=0.25 freezes the phase (0=new, .5=full) to eyeball the terminator
   var phaseOverride = null;
+  var moonOverride = null;               // set by the settings panel; null = follow the real date
   var mo = params().get('moon');
   if (mo !== null && mo !== '') {
     var mv = Number(mo);
@@ -57,8 +58,14 @@
 
   window.addEventListener('message', function (ev) {
     var m = ev.data;
-    if (m && m.type === 'fw-set' && Number.isFinite(Number(m.density))) {
+    if (!m || m.type !== 'fw-set') return;
+    if (Number.isFinite(Number(m.density))) {
       density = Math.min(150, Math.max(50, Number(m.density)));
+    }
+    if (m.moon === null || m.moon === undefined || m.moon === '') {
+      moonOverride = null;               // panel switch: auto (track the sky)
+    } else if (Number.isFinite(Number(m.moon))) {
+      moonOverride = ((Number(m.moon) % 1) + 1) % 1;
     }
   });
 
@@ -599,7 +606,8 @@
     var my = Math.max(H * MOON_Y, 10);
     var mr = Math.min(34, 18 * S);
 
-    var phase = phaseOverride === null ? lunarPhase(Date.now()) : phaseOverride;
+    var phase = phaseOverride !== null ? phaseOverride
+      : (moonOverride !== null ? moonOverride : lunarPhase(Date.now()));
 
     // wide warm halo
     var glow = ctx.createRadialGradient(mx, my, mr * 0.6, mx, my, mr * 3.8);

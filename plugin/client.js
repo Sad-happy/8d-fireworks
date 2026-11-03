@@ -19,9 +19,10 @@ window.__ModuleLoader__.load({ id: "8d-fireworks", factory: (require) => {
     enabled: 'fwEnabled',
     glass: 'fwGlass',
     density: 'fwDensity',
+    moon: 'fwMoon',
   });
 
-  const DEFAULTS = Object.freeze({ enabled: true, glass: 55, density: 100 });
+  const DEFAULTS = Object.freeze({ enabled: true, glass: 55, density: 100, moon: null });
 
   const COPY = Object.freeze({
     zh: {
@@ -29,20 +30,26 @@ window.__ModuleLoader__.load({ id: "8d-fireworks", factory: (require) => {
       close: '关闭',
       glass: '玻璃不透明度',
       density: '烟花密度',
+      moon: '月相',
+      moonAuto: '跟随真实日期',
+      moonAutoShort: '自动',
       enable: '启用烟花背景',
       reset: '恢复默认',
-      resetNote: '恢复全部默认设置（玻璃 55 / 密度 100 / 启用）',
-      note: '调节即时生效并自动保存；烟花对耳机里播放的声音起舞，月亮随日期真实盈亏。',
+      resetNote: '恢复全部默认设置（玻璃 55 / 密度 100 / 月相自动 / 启用）',
+      note: '调节即时生效并自动保存；烟花对耳机里播放的声音起舞，月亮随日期真实盈亏，也可手动拨动月相。',
     },
     en: {
       button: 'Fireworks settings',
       close: 'Close',
       glass: 'Glass opacity',
       density: 'Firework density',
+      moon: 'Moon phase',
+      moonAuto: 'Follow the real date',
+      moonAutoShort: 'auto',
       enable: 'Enable fireworks background',
       reset: 'Reset to defaults',
-      resetNote: 'Restore all defaults (glass 55 / density 100 / enabled)',
-      note: 'Changes apply immediately and save automatically. Fireworks dance to the sound on your headphones, and the moon tracks the real lunar phase.',
+      resetNote: 'Restore all defaults (glass 55 / density 100 / moon auto / enabled)',
+      note: 'Changes apply immediately and save automatically. Fireworks dance to the sound on your headphones; the moon tracks the real lunar phase, or you can dial it by hand.',
     },
   });
 
@@ -51,10 +58,14 @@ window.__ModuleLoader__.load({ id: "8d-fireworks", factory: (require) => {
     return Number.isFinite(number) ? Math.min(max, Math.max(min, number)) : fallback;
   }
   function normalize(raw) {
+    const moon = (raw.moon === null || raw.moon === undefined || raw.moon === 'auto')
+      ? null
+      : clamp(raw.moon, 0, 1, null);
     return {
       enabled: raw.enabled !== false,
       glass: clamp(raw.glass, 40, 90, DEFAULTS.glass),
       density: clamp(raw.density, 50, 150, DEFAULTS.density),
+      moon,
     };
   }
   function readSetting(key, fallback) {
@@ -62,6 +73,7 @@ window.__ModuleLoader__.load({ id: "8d-fireworks", factory: (require) => {
       const value = localStorage.getItem(KEYS[key]);
       if (value === null) return fallback;
       if (key === 'enabled') return value !== 'false';
+      if (key === 'moon') return (value === 'auto' || value === '') ? null : Number(value);
       return Number(value);
     } catch { return fallback; }
   }
@@ -166,6 +178,9 @@ body[data-ds-dark-theme] :is([data-shortcut-modal="settings"], [role="dialog"], 
 #${IDS.panel} input[type='range'] { appearance:none; display:block; width:100%; height:14px; margin:0; padding:0; background:transparent; cursor:pointer; }
 #${IDS.panel} input[type='range']::-webkit-slider-runnable-track { height:3px; border-radius:2px; background:rgba(255,255,255,.2); }
 #${IDS.panel} input[type='range']::-webkit-slider-thumb { appearance:none; width:14px; height:14px; margin-top:-5.5px; border-radius:50%; background:#ffd9a0; border:0; box-shadow:0 0 8px rgba(255,217,160,.4); }
+#${IDS.panel} input[type='range']:disabled { opacity:.35; cursor:default; }
+#${IDS.panel} .fw-moon-auto { margin-top:10px; }
+#${IDS.panel} .fw-moon-auto label { font-size:11px; color:rgba(255,255,255,.6); }
 #${IDS.panel} .fw-switch { display:flex; align-items:center; justify-content:space-between; gap:10px; }
 #${IDS.panel} .fw-switch label { font-size:12px; color:rgba(255,255,255,.85); cursor:pointer; }
 #${IDS.panel} input[type='checkbox'] { appearance:none; width:34px; height:19px; border-radius:10px; background:rgba(255,255,255,.16); position:relative; cursor:pointer; transition:background .18s ease; margin:0; }
@@ -223,7 +238,7 @@ body[data-ds-dark-theme] :is([data-shortcut-modal="settings"], [role="dialog"], 
       if (!(frame instanceof HTMLIFrameElement) || !frame.contentWindow) return;
       let targetOrigin = '*';
       try { targetOrigin = new URL(frame.src).origin; } catch { /* keep '*' */ }
-      frame.contentWindow.postMessage({ type: 'fw-set', density: state.density }, targetOrigin);
+      frame.contentWindow.postMessage({ type: 'fw-set', density: state.density, moon: state.moon }, targetOrigin);
     };
 
     // Diagnostic line rendered INSIDE our own panel (no iframe dependency):
@@ -346,6 +361,7 @@ body[data-ds-dark-theme] :is([data-shortcut-modal="settings"], [role="dialog"], 
         <div class="fw-title"><span>DSH <span class="fw-mark">·</span> FIREWORKS</span><button class="fw-close" type="button" aria-label="${copy.close}">×</button></div>
         <div class="fw-row"><div class="fw-head"><label for="${IDS.panel}-glass-range">${copy.glass}</label><output class="fw-value" id="${IDS.panel}-glass" for="${IDS.panel}-glass-range"></output></div><input type="range" id="${IDS.panel}-glass-range" min="40" max="90" step="1" /></div>
         <div class="fw-row"><div class="fw-head"><label for="${IDS.panel}-density-range">${copy.density}</label><output class="fw-value" id="${IDS.panel}-density" for="${IDS.panel}-density-range"></output></div><input type="range" id="${IDS.panel}-density-range" min="50" max="150" step="5" /></div>
+        <div class="fw-row"><div class="fw-head"><label for="${IDS.panel}-moon-range">${copy.moon}</label><output class="fw-value" id="${IDS.panel}-moon" for="${IDS.panel}-moon-range"></output></div><input type="range" id="${IDS.panel}-moon-range" min="0" max="100" step="1" /><div class="fw-switch fw-moon-auto"><label for="${IDS.panel}-moon-auto">${copy.moonAuto}</label><input type="checkbox" id="${IDS.panel}-moon-auto" /></div></div>
         <div class="fw-row fw-switch"><label for="${IDS.panel}-enabled">${copy.enable}</label><input type="checkbox" id="${IDS.panel}-enabled" /></div>
         <button type="button" class="fw-reset">${copy.reset}</button>
         <p class="fw-note">${copy.resetNote}<br>${copy.note}</p>`;
@@ -355,21 +371,34 @@ body[data-ds-dark-theme] :is([data-shortcut-modal="settings"], [role="dialog"], 
 
       const glassRange = panel.querySelector(`#${IDS.panel}-glass-range`);
       const densityRange = panel.querySelector(`#${IDS.panel}-density-range`);
+      const moonRange = panel.querySelector(`#${IDS.panel}-moon-range`);
       const glassOut = panel.querySelector(`#${IDS.panel}-glass`);
       const densityOut = panel.querySelector(`#${IDS.panel}-density`);
+      const moonOut = panel.querySelector(`#${IDS.panel}-moon`);
       const enableBox = panel.querySelector(`#${IDS.panel}-enabled`);
+      const moonAutoBox = panel.querySelector(`#${IDS.panel}-moon-auto`);
 
       const refresh = () => {
         glassRange.value = String(state.glass);
         densityRange.value = String(state.density);
         glassOut.textContent = String(state.glass);
         densityOut.textContent = String(state.density);
+        const moonAuto = state.moon === null;
+        moonRange.value = String(moonAuto ? 50 : Math.round(state.moon * 100));
+        moonRange.disabled = moonAuto;
+        moonOut.textContent = moonAuto ? copy.moonAutoShort : `${Math.round(state.moon * 100)}%`;
+        moonAutoBox.checked = moonAuto;
         enableBox.checked = state.enabled;
       };
       refresh();
 
       glassRange.addEventListener('input', () => { save({ glass: Number(glassRange.value) }); refresh(); updateGlass(); });
       densityRange.addEventListener('input', () => { save({ density: Number(densityRange.value) }); refresh(); postToFrame(); });
+      moonRange.addEventListener('input', () => { save({ moon: Number(moonRange.value) / 100 }); refresh(); postToFrame(); });
+      moonAutoBox.addEventListener('change', () => {
+        save({ moon: moonAutoBox.checked ? null : Number(moonRange.value) / 100 });
+        refresh(); postToFrame();
+      });
       enableBox.addEventListener('change', () => { save({ enabled: enableBox.checked }); applyEnabled(); });
       panel.querySelector('.fw-close').addEventListener('click', () => setPanelOpen(false));
       panel.querySelector('.fw-reset').addEventListener('click', () => {
@@ -439,6 +468,7 @@ body[data-ds-dark-theme] :is([data-shortcut-modal="settings"], [role="dialog"], 
           enabled: readSetting('enabled', DEFAULTS.enabled),
           glass: readSetting('glass', DEFAULTS.glass),
           density: readSetting('density', DEFAULTS.density),
+          moon: readSetting('moon', DEFAULTS.moon),
         });
       } catch (error) {
         console.warn('[8d-fireworks] Failed to load settings; using defaults.', error);
@@ -469,11 +499,12 @@ body[data-ds-dark-theme] :is([data-shortcut-modal="settings"], [role="dialog"], 
           enabled: readSetting('enabled', DEFAULTS.enabled),
           glass: readSetting('glass', DEFAULTS.glass),
           density: readSetting('density', DEFAULTS.density),
+          moon: readSetting('moon', DEFAULTS.moon),
         }),
         set: async (patch) => {
           try {
             for (const [key, value] of Object.entries(patch)) {
-              localStorage.setItem(KEYS[key], String(value));
+              localStorage.setItem(KEYS[key], value === null ? 'auto' : String(value));
             }
           } catch { /* keep live values */ }
         },

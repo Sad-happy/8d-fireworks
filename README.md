@@ -7,11 +7,12 @@ star field with the real moon phase fills the gaps.
 
 Show highlights:
 
-- 11 shell types (peony, chrysanthemum, willow, ring, heart, crossette, palm,
-  glitter, spiral, double, plus pistil/strobe cores) and multi-break grand shells.
+- 12 shell types (peony, chrysanthemum, willow, ring, heart, crossette, palm,
+  glitter, spiral, double, pistil, strobe) and multi-break grand shells.
 - The moon follows the real synodic month (`0` = new, `.5` = full): terminator,
-  earthshine and craters track today's date. `?moon=0.25` freezes a phase for
-  testing.
+  earthshine and craters track today's date. The settings panel can also pin a
+  phase by hand (moon slider + "Follow the real date" switch), and `?moon=0.25`
+  freezes a phase in the URL for testing.
 - 170 stars with a milky-way band, cross flares and twinkle, plus occasional
   meteors.
 
@@ -50,7 +51,8 @@ feeder\stop_feeder.ps1
 ```
 
 Then reload the DSH page — a spark button appears next to the (optional)
-ocean-skin button, with glass opacity / firework density / on-off settings.
+ocean-skin button. The panel has glass opacity, firework density, moon phase
+(auto or manual) and an on/off switch.
 
 ## Files
 
