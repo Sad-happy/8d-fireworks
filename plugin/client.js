@@ -77,21 +77,24 @@ window.__ModuleLoader__.load({ id: "dsh-fireworks", factory: (require) => {
   <circle cx="8" cy="8" r="1.6" fill="currentColor" opacity="0.9"/>
 </svg>`;
 
-  function glassCss(glass) {
+  function glassCss(glass, dark) {
     const a = Number((glass / 100).toFixed(2));
+    const c = dark
+      ? { base: '10, 14, 22', l1: '12, 16, 25', l2: '16, 20, 30', l3: '20, 25, 35', ov: '12, 16, 25' }
+      : { base: '255, 255, 255', l1: '250, 250, 252', l2: '245, 246, 250', l3: '240, 241, 246', ov: '250, 251, 253' };
     return `
-/* dsh-fireworks: dark-tinted translucent shell; fireworks shine through. */
+/* dsh-fireworks: translucent shell (${dark ? 'dark' : 'light'} theme); fireworks shine through. */
 body {
   background: transparent !important;
-  --dsw-alias-bg-base: rgba(10, 14, 22, ${a}) !important;
-  --dsw-alias-bg-layer-1: rgba(12, 16, 25, ${a}) !important;
-  --dsw-alias-bg-layer-2: rgba(16, 20, 30, ${a}) !important;
-  --dsw-alias-bg-layer-3: rgba(20, 25, 35, ${a}) !important;
-  --dsw-alias-bg-module-platform: rgba(12, 16, 25, ${a}) !important;
-  --dsw-alias-bg-multi-select: rgba(12, 16, 25, ${a}) !important;
-  --dsw-alias-bg-overlay: rgba(12, 16, 25, .96) !important;
-  --dsw-specific-sidebar-fill: rgba(10, 14, 22, ${Math.max(0.36, a - 0.04)}) !important;
-  --dsw-specific-selector: rgba(12, 16, 25, ${a}) !important;
+  --dsw-alias-bg-base: rgba(${c.base}, ${a}) !important;
+  --dsw-alias-bg-layer-1: rgba(${c.l1}, ${a}) !important;
+  --dsw-alias-bg-layer-2: rgba(${c.l2}, ${a}) !important;
+  --dsw-alias-bg-layer-3: rgba(${c.l3}, ${a}) !important;
+  --dsw-alias-bg-module-platform: rgba(${c.l1}, ${a}) !important;
+  --dsw-alias-bg-multi-select: rgba(${c.l1}, ${a}) !important;
+  --dsw-alias-bg-overlay: rgba(${c.ov}, .96) !important;
+  --dsw-specific-sidebar-fill: rgba(${c.base}, ${Math.max(0.36, a - 0.04)}) !important;
+  --dsw-specific-selector: rgba(${c.l1}, ${a}) !important;
 }
 body:is([data-dsh-desktop-mode="advanced"], [data-dsh-desktop-mode="extended"]) .dshDesktopFrame {
   background: var(--dsw-alias-bg-base) !important;
@@ -182,6 +185,7 @@ body[data-ds-dark-theme] :is([data-shortcut-modal="settings"], [role="dialog"], 
     let previousFocus = null;
     let placementFrame = 0;
     let placementObserver = null;
+    let themeObserver = null;
     const surfaceCleanups = [];
     const controllerCleanups = [];
 
@@ -192,9 +196,18 @@ body[data-ds-dark-theme] :is([data-shortcut-modal="settings"], [role="dialog"], 
       });
     };
 
+    const seaOwnsGlass = () => !!document.getElementById('__open-sea-skin-glass__');
+    const isDarkTheme = () => !!(document.body && document.body.hasAttribute('data-ds-dark-theme'));
     const updateGlass = () => {
       const style = document.getElementById(IDS.glass);
-      if (style) style.textContent = glassCss(state.glass);
+      if (seaOwnsGlass()) {
+        // open-sea-skin owns the shell tint. Two !important layers writing the
+        // same --dsw-alias-* variables stack into mud (our dark glass painted
+        // over its light one -> whole app went dark in light theme). Defer.
+        if (style) style.remove();
+        return;
+      }
+      if (style) style.textContent = glassCss(state.glass, isDarkTheme());
     };
 
     const postToFrame = () => {
@@ -277,10 +290,7 @@ body[data-ds-dark-theme] :is([data-shortcut-modal="settings"], [role="dialog"], 
       } else {
         root.insertBefore(frame, root.firstChild);
       }
-      const style = document.createElement('style');
-      style.id = IDS.glass;
-      style.textContent = glassCss(state.glass);
-      (document.head || document.documentElement).appendChild(style);
+      updateGlass(); // no-op while open-sea-skin owns the shell tint
       ownsSurface = true;
       return true;
     };
@@ -347,12 +357,22 @@ body[data-ds-dark-theme] :is([data-shortcut-modal="settings"], [role="dialog"], 
       placementObserver = new MutationObserver(schedulePlace);
       placementObserver.observe(host, { childList: true, subtree: true });
       schedulePlace();
+
+      // theme flips (and sea mounting/unmounting its glass) re-evaluate who
+      // owns the shell tint and which palette our fallback glass uses
+      themeObserver = new MutationObserver(updateGlass);
+      themeObserver.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['data-ds-dark-theme', 'class', 'data-dsh-desktop-mode'],
+      });
     };
 
     const unmount = () => {
       panelOpen = false;
       placementObserver?.disconnect();
       placementObserver = null;
+      themeObserver?.disconnect();
+      themeObserver = null;
       cancelAnimationFrame(placementFrame);
       while (surfaceCleanups.length > 0) surfaceCleanups.pop()();
       if (ownsSurface) {

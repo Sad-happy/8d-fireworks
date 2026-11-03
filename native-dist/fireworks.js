@@ -281,10 +281,13 @@
 
     // status badge: consumed-event counter (bottom-left). Always drawn so a
     // quick look tells renderer(loaded?) / events(flowing?) / show(visible?).
-    ctx.fillStyle = 'rgba(8,10,16,0.72)';
+    ctx.fillStyle = 'rgba(8,10,16,0.78)';
     ctx.beginPath();
     roundRect(ctx, 8, H - 26, 86, 18, 9);
     ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.30)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
     ctx.fillStyle = '#ffd76a';
     ctx.font = '11px monospace';
     ctx.textBaseline = 'middle';
