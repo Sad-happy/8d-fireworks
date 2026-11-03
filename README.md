@@ -55,7 +55,11 @@ feeder\stop_feeder.ps1
 
 Then reload the DSH page — a spark button appears next to the (optional)
 ocean-skin button. The panel has glass opacity, firework density, moon phase
-(auto or manual) and an on/off switch.
+(auto or manual), an on/off switch and a fireworks toggle: untick **Fireworks**
+to keep only the starry-sky background while the music keeps playing.
+
+The toggle lives in `~/.dsh/fireworks/ctl.json` and is shared with the desktop
+(tkinter) window and the voice butler — saying "停烟花" turns off both.
 
 ## Files
 
