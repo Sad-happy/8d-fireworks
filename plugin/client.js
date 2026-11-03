@@ -199,7 +199,7 @@ body[data-ds-dark-theme] :is([data-shortcut-modal="settings"], [role="dialog"], 
     const seaOwnsGlass = () => !!document.getElementById('__open-sea-skin-glass__');
     const isDarkTheme = () => !!(document.body && document.body.hasAttribute('data-ds-dark-theme'));
     const updateGlass = () => {
-      const style = document.getElementById(IDS.glass);
+      let style = document.getElementById(IDS.glass);
       if (seaOwnsGlass()) {
         // open-sea-skin owns the shell tint. Two !important layers writing the
         // same --dsw-alias-* variables stack into mud (our dark glass painted
@@ -207,7 +207,15 @@ body[data-ds-dark-theme] :is([data-shortcut-modal="settings"], [role="dialog"], 
         if (style) style.remove();
         return;
       }
-      if (style) style.textContent = glassCss(state.glass, isDarkTheme());
+      // CREATE the style when missing — sea absent means WE are the only glass
+      // owner; without this branch the app surfaces stay fully opaque and the
+      // mounted background iframes stay buried underneath them.
+      if (!style) {
+        style = document.createElement('style');
+        style.id = IDS.glass;
+        (document.head || document.documentElement).appendChild(style);
+      }
+      style.textContent = glassCss(state.glass, isDarkTheme());
     };
 
     const postToFrame = () => {
