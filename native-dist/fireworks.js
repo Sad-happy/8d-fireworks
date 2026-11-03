@@ -219,7 +219,11 @@
   function draw() {
     ctx.clearRect(0, 0, W, H);
     var now = performance.now() / 1000;
-    var k, x, y, j, h;
+    // k/r/q/j loop temporaries — MUST be declared here: this file runs under
+    // 'use strict', and stepPhysics's own declarations don't cover draw();
+    // an undeclared `r = rockets[k]` threw ReferenceError and killed the
+    // whole render loop after the first (star-only) frame.
+    var k, r, q, j, x, y, h;
 
     // stars
     var tw = now * 2.2;
@@ -320,11 +324,22 @@
   var last = performance.now();
   var acc = 0;
   function frame(nowMs) {
-    acc += nowMs - last; last = nowMs;
-    if (acc > 250) acc = 250;              // tab was hidden; don't spiral
-    while (acc >= STEP) { stepPhysics(nowMs); acc -= STEP; }
-    draw();
+    // reschedule FIRST: a throw inside the body must never kill the show
+    // (a dead loop + a canvas cleared by resize = permanent blank sky)
     requestAnimationFrame(frame);
+    try {
+      acc += nowMs - last; last = nowMs;
+      if (acc > 250) acc = 250;            // tab was hidden; don't spiral
+      while (acc >= STEP) { stepPhysics(nowMs); acc -= STEP; }
+      draw();
+    } catch (e) {
+      var hEl = document.getElementById('hint');
+      var msg = 'ERR: ' + (e && e.message || e);
+      if (hEl && hEl.textContent !== msg) {
+        hEl.textContent = msg;
+        hEl.classList.add('show');
+      }
+    }
   }
   requestAnimationFrame(frame);
 })();
