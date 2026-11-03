@@ -2,7 +2,6 @@
   "name": "8d-fireworks",
   "version": "0.2.0",
   "type": "module",
-  "private": true,
   "description": "8D audio-reactive fireworks with real lunar phases for DeepSeek Harness",
   "keywords": [
     "deepseek-harness",
@@ -42,5 +41,17 @@
   "engines": {
     "node": ">=20"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "author": {
+    "name": "Sad-happy",
+    "url": "https://github.com/Sad-happy"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Sad-happy/8d-fireworks.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Sad-happy/8d-fireworks/issues"
+  },
+  "homepage": "https://github.com/Sad-happy/8d-fireworks#readme"
 }

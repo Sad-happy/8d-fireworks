@@ -39,8 +39,11 @@ Show highlights:
 
 ```powershell
 # from the profile that runs the desktop app
-corepack pnpm@11.28.5 --dir <profile-dir> add link:<path-to-this-repo>
+corepack pnpm@11.28.5 --dir <profile-dir> add github:Sad-happy/8d-fireworks
 # then add "8d-fireworks" to dsh.profile.bundles in the profile package.json
+#
+# dev mode (edit-in-place, instead of the github: spec):
+corepack pnpm@11.28.5 --dir <profile-dir> add link:<path-to-this-repo>
 ```
 
 ## Run
