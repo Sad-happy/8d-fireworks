@@ -146,7 +146,10 @@
   function poll() {
     if (pollBusy) return;
     pollBusy = true;
-    fetch('state.json', { cache: 'no-store' })
+    var stateUrl;
+    try { stateUrl = new URL('state.json', location.href).href; }
+    catch (e) { stateUrl = 'state.json'; }
+    fetch(stateUrl, { cache: 'no-store' })
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (data) {
         pollBusy = false;

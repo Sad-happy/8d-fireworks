@@ -218,6 +218,24 @@ body[data-ds-dark-theme] :is([data-shortcut-modal="settings"], [role="dialog"], 
       frame.contentWindow.postMessage({ type: 'fw-set', density: state.density }, targetOrigin);
     };
 
+    // Diagnostic line rendered INSIDE our own panel (no iframe dependency):
+    // if the panel shows but the status says the frame is missing, the bug is
+    // in mountFrame/applyEnabled; if the panel itself is absent, the whole
+    // client never ran (ModuleLoader level).
+    const reportStatus = () => {
+      const button = document.getElementById(IDS.button);
+      const note = document.querySelector(`#${IDS.panel} .fw-note`);
+      const frameOk = !!document.getElementById(IDS.frame);
+      const sea = !!document.getElementById('__open-sea-skin__');
+      const glass = seaOwnsGlass() ? '海洋接管' : (document.getElementById(IDS.glass) ? '自有' : '无');
+      const text = `背景层${frameOk ? '已挂载' : '未挂载'} · 海洋${sea ? '在场' : '不在场'} · 玻璃:${glass}`;
+      if (button) button.title = `dsh-fireworks — ${text}`;
+      if (note instanceof HTMLElement) {
+        if (!note.dataset.base) note.dataset.base = note.innerHTML;
+        note.innerHTML = `${note.dataset.base}<br><b>状态：${text}</b>`;
+      }
+    };
+
     const placeButton = () => {
       const button = document.getElementById(IDS.button);
       if (!(button instanceof HTMLElement)) return;
@@ -360,7 +378,7 @@ body[data-ds-dark-theme] :is([data-shortcut-modal="settings"], [role="dialog"], 
 
       // theme flips (and sea mounting/unmounting its glass) re-evaluate who
       // owns the shell tint and which palette our fallback glass uses
-      themeObserver = new MutationObserver(updateGlass);
+      themeObserver = new MutationObserver(() => { updateGlass(); reportStatus(); });
       themeObserver.observe(document.body, {
         attributes: true,
         attributeFilter: ['data-ds-dark-theme', 'class', 'data-dsh-desktop-mode'],
@@ -393,10 +411,12 @@ body[data-ds-dark-theme] :is([data-shortcut-modal="settings"], [role="dialog"], 
           document.getElementById(IDS.glass)?.remove();
           ownsSurface = false;
         }
+        reportStatus();
         return;
       }
-      if (document.getElementById(IDS.frame)) { postToFrame(); return; }
+      if (document.getElementById(IDS.frame)) { postToFrame(); reportStatus(); return; }
       if (mountFrame()) postToFrame();
+      reportStatus();
     };
 
     const ready = () => new Promise((resolve) => {
@@ -415,7 +435,12 @@ body[data-ds-dark-theme] :is([data-shortcut-modal="settings"], [role="dialog"], 
       } catch (error) {
         console.warn('[dsh-fireworks] Failed to load settings; using defaults.', error);
       }
-      applyEnabled();
+      try {
+        applyEnabled();
+      } catch (error) {
+        console.warn('[dsh-fireworks] applyEnabled failed.', error);
+      }
+      reportStatus();
     };
 
     const stop = () => {
