@@ -46,9 +46,16 @@
   resize();
 
   // deterministic RNG like the tkinter show
+  // one function, two forms: rnd() -> raw sample; rnd(a, b) -> range sample.
+  // (Two same-name declarations would shadow each other and recurse forever.)
   var seed = 20261102;
-  function rnd() { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; }
-  function rnd(a, b) { return a + (b - a) * rnd(); }
+  function rnd(a, b) {
+    if (a === undefined) {
+      seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+      return seed / 0x7fffffff;
+    }
+    return a + (b - a) * rnd();
+  }
 
   var PALETTE = [0.12, 0.12, 0.12, 0.12, 0.955, 0.955, 0.52, 0.52, 0.76, 0.15];
 
