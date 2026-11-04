@@ -68,6 +68,7 @@ The toggle lives in `~/.dsh/fireworks/ctl.json` and is shared with the desktop
 | `plugin/index.js` | host plugin: serves the renderer and bridges `state.json` |
 | `plugin/client.js` | client injection: iframe + glass + button/panel |
 | `native-dist/fireworks.html/js` | the canvas show (star field, real moon phase, shells, meteors) |
+| `native-dist/flowers.webp` | cosmos bouquet cut from the wallpaper; a swaying flower bed along the bottom edge |
 | `feeder/feeder.py` | loopback analyser publishing onset events at 30 fps |
 | `feeder/start_feeder.ps1` / `stop_feeder.ps1` | feeder lifecycle |
 

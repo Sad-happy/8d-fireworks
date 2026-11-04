@@ -81,6 +81,17 @@
   window.addEventListener('resize', resize);
   resize();
 
+  // ---------- foreground flowers ----------
+  // A cosmos bouquet cut from the user's wallpaper (focus-map segmentation),
+  // served as flowers.webp next to this script. Three instances (big left,
+  // mirrored centre, medium right) make a flower bed along the bottom edge,
+  // each swaying slowly out of phase; fireworks fall in front of it.
+  var flowers = new Image();
+  flowers.src = 'flowers.webp';
+  var flowersReady = false;
+  flowers.onload = function () { flowersReady = true; };
+  flowers.onerror = function () { flowersReady = false; };
+
   // deterministic RNG like the tkinter show
   // one function, two forms: rnd() -> raw sample; rnd(a, b) -> range sample.
   // (Two same-name declarations would shadow each other and recurse forever.)
@@ -673,6 +684,33 @@
     dot(mx, my, mr * 1.18);
   }
 
+  function drawFlowers(now) {
+    if (!flowersReady || !flowers.width) return;
+    var ar = flowers.width / flowers.height;
+    // the flower bed: [heightFactor, leftFactor, flip, swayPhase]
+    var bed = [
+      [0.42, 0.015,  1, 0.0],
+      [0.30, 0.30,  -1, 1.7],
+      [0.34, 0.66,   1, 3.1]
+    ];
+    for (var i = 0; i < bed.length; i++) {
+      var b = bed[i];
+      var h = H * b[0], w = h * ar;
+      var left = b[2] > 0 ? W * b[1] : W * b[1] - w;  // flip draws rightwards from left edge
+      bouquet(w, h, left, b[2], Math.sin(now * 0.45 + b[3]) * 0.010);
+    }
+  }
+  function bouquet(w, h, left, flip, rot) {
+    ctx.save();
+    ctx.translate(left + w / 2, H);       // pivot at the bottom centre
+    ctx.rotate(rot * flip);
+    if (flip < 0) ctx.scale(-1, 1);
+    ctx.globalAlpha = 0.95;
+    ctx.drawImage(flowers, -w / 2, -h, w, h);
+    ctx.restore();
+    ctx.globalAlpha = 1;
+  }
+
   function drawShooters() {
     ctx.globalCompositeOperation = 'lighter';
     for (var k = 0; k < shooters.length; k++) {
@@ -820,6 +858,7 @@
     drawStars(now);
     drawMoon();
     drawShooters();
+    drawFlowers(now);
 
     ctx.globalCompositeOperation = 'lighter';
     drawRockets();
